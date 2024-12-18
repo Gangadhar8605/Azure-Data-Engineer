@@ -1,0 +1,25 @@
+population_df = spark.read.format('delta').\
+    option('header', 'true').\
+    load('abfss://silver@project1adls.dfs.core.windows.net/population')
+
+
+population_agg_data =  population_df.groupby('country').pivot('age_group').sum('population')
+population_agg_data.write.format('delta').mode('overwrite').save('abfss://gold@project1adls.dfs.core.windows.net/population_agg_data')
+
+
+population_agg_data =  population_df.groupby('country').pivot('age_group').sum('population')
+population_agg_data.write.format('delta').mode('overwrite').save('abfss://gold@project1adls.dfs.core.windows.net/population_agg_data')
+
+%sql
+drop table if exists project1_db.project1_shm.population;
+CREATE TABLE IF NOT EXISTS project1_db.project1_shm.population (
+    country string, 
+    Y0_14 long, 
+    Y15_24 long,  
+    Y25_49 long,  
+    Y50_64 long,  
+    Y65_79 long, 
+    Y80_MAX long
+)
+using delta
+options (path 'abfss://gold@project1adls.dfs.core.windows.net/population_agg_data')
